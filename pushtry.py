@@ -35,6 +35,25 @@ class FoodEntry(Base):
 
 Base.metadata.create_all(engine)
 
+# Function to load foods from Excel
+def load_foods_from_excel(filepath):
+    df = pd.read_excel(filepath)
+    for index, row in df.iterrows():
+        exists = session.query(Food).filter_by(name=row['name']).first()
+        if not exists:
+            new_food = Food(
+                name=row['name'],
+                calories=int(row['calories']),
+                protein=float(row['protein']),
+                fat=float(row['fat']),
+                carbohydrates=float(row['carbohydrates'])
+            )
+            session.add(new_food)
+    session.commit()
+
+# Load foods from Excel at start
+load_foods_from_excel('Foods.xlsx')
+
 root = tk.Tk()
 root.title("Macro Tracker")
 root.geometry('1000x600')
@@ -64,6 +83,8 @@ def refresh_foods():
     food_names = [f.name for f in foods]
     food_combobox['values'] = food_names
 
+refresh_foods()
+
 def update_chart():
     today = datetime.datetime.now().date()
     totals = session.query(
@@ -90,8 +111,5 @@ def add_selected_food():
 
 add_button = ttk.Button(frame, text="Add Selected Food", command=add_selected_food)
 add_button.grid(column=1, row=1)
-
-refresh_foods()
-update_chart()
 
 root.mainloop()
