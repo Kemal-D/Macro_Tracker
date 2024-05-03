@@ -112,4 +112,10 @@ def add_selected_food():
 add_button = ttk.Button(frame, text="Add Selected Food", command=add_selected_food)
 add_button.grid(column=1, row=1)
 
+def on_close():
+    session.close()  # Close the database session
+    root.destroy()   # Destroy the Tkinter window
+
+root.protocol("WM_DELETE_WINDOW", on_close)  # Attach the close function to window close
+
 root.mainloop()
