@@ -132,15 +132,10 @@ add_button = ttk.Button(frame, text="Add Selected Food", command=add_selected_fo
 add_button.grid(column=1, row=1)
 
 # Function to close the application and cleanup
-def on_close(root):
-    """ Close the application cleanly. """
-    try:
-        db_session.remove()
-        engine.dispose()  # Close the connection pool
-    finally:
-        root.destroy()
+def on_close():
+    Session.remove()  # Properly close down the session factory
+    root.destroy()    # Ensure the main window is closed
 
-root.protocol("WM_DELETE_WINDOW", lambda: on_close(root))
+root.protocol("WM_DELETE_WINDOW", on_close)  # Attach the close function to window close
 
-load_foods_from_excel('Foods.xlsx')
 root.mainloop()
