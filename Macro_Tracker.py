@@ -6,7 +6,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date
 from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base
 import datetime
-import re
+import re  # Import regular expression library for number extraction
 
 # Database setup
 engine = create_engine('sqlite:///macro_tracker.db', echo=True)
@@ -126,21 +126,23 @@ def launch_meal_planner(root):
             for food in foods:
                 lb.insert(tk.END, f"{food.name} - {food.calories} cal, {food.protein}g protein, {food.fat}g fat, {food.carbohydrates}g carbs")
 
-    def calculate_totals():
+    def calculate_totals(event):
         selections = lb.curselection()
         total_calories, total_protein, total_fat, total_carbs = 0, 0, 0, 0
         for i in selections:
             item = lb.get(i)
             numbers = re.findall(r'\d+', item)  # This will find all groups of digits in the string
-            if numbers:
-                cal, prot, fat, carb = map(int, numbers)  # Convert each string number to integer
+            if len(numbers) == 4:  # Ensure there are exactly four numbers (calories, protein, fat, carbs)
+                cal, prot, fat, carb = map(int, numbers)
                 total_calories += cal
                 total_protein += prot
                 total_fat += fat
                 total_carbs += carb
         total_label.config(text=f"Total: {total_calories} calories, {total_protein}g protein, {total_fat}g fat, {total_carbs}g carbs")
 
-    calc_button = ttk.Button(planner_window, text="Calculate Totals", command=calculate_totals)
+    lb.bind('<<ListboxSelect>>', calculate_totals)  # Bind the selection event
+
+    calc_button = ttk.Button(planner_window, text="Calculate Totals", command=lambda: calculate_totals(None))  # Also can trigger manually
     calc_button.pack(pady=10)
 
     total_label = ttk.Label(planner_window, text="Total: 0 calories, 0g protein, 0g fat, 0g carbs")
