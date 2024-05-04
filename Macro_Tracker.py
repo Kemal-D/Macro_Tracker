@@ -1,12 +1,12 @@
 import tkinter as tk
-from tkinter import ttk, Menu, messagebox
+from tkinter import ttk, Menu, messagebox, Toplevel, Listbox, MULTIPLE
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base
 import datetime
+import re
 
 # Database setup
 engine = create_engine('sqlite:///macro_tracker.db', echo=True)
@@ -108,6 +108,45 @@ def add_selected_food():
 
 add_button = ttk.Button(frame, text="Add Selected Food", command=add_selected_food)
 add_button.grid(column=1, row=1)
+
+meal_planner_button = ttk.Button(frame, text="Launch Meal Planner", command=lambda: launch_meal_planner(root))
+meal_planner_button.grid(column=1, row=2)
+
+def launch_meal_planner(root):
+    planner_window = Toplevel(root)
+    planner_window.title("Meal Planner")
+    planner_window.geometry('600x400')
+
+    lb = Listbox(planner_window, selectmode=MULTIPLE, width=50, height=10)
+    lb.pack(pady=20)
+
+    def refresh_planner_foods():
+        with Session() as session:
+            foods = session.query(Food).all()
+            for food in foods:
+                lb.insert(tk.END, f"{food.name} - {food.calories} cal, {food.protein}g protein, {food.fat}g fat, {food.carbohydrates}g carbs")
+
+    def calculate_totals():
+        selections = lb.curselection()
+        total_calories, total_protein, total_fat, total_carbs = 0, 0, 0, 0
+        for i in selections:
+            item = lb.get(i)
+            numbers = re.findall(r'\d+', item)  # This will find all groups of digits in the string
+            if numbers:
+                cal, prot, fat, carb = map(int, numbers)  # Convert each string number to integer
+                total_calories += cal
+                total_protein += prot
+                total_fat += fat
+                total_carbs += carb
+        total_label.config(text=f"Total: {total_calories} calories, {total_protein}g protein, {total_fat}g fat, {total_carbs}g carbs")
+
+    calc_button = ttk.Button(planner_window, text="Calculate Totals", command=calculate_totals)
+    calc_button.pack(pady=10)
+
+    total_label = ttk.Label(planner_window, text="Total: 0 calories, 0g protein, 0g fat, 0g carbs")
+    total_label.pack()
+
+    refresh_planner_foods()
 
 load_foods_from_excel('Foods.xlsx')
 refresh_foods()
